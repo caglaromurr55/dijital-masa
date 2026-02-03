@@ -6,6 +6,8 @@ import ExportButton from "@/components/reports/ExportButton";
 
 const ITEMS_PER_PAGE = 20;
 
+export const dynamic = 'force-dynamic';
+
 export default async function TicketsPage({
   searchParams,
 }: {

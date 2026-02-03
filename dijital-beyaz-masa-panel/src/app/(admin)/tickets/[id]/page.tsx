@@ -7,6 +7,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import UserSelect from "@/components/admin/UserSelect";
 
+export const dynamic = 'force-dynamic';
+
 export default async function TicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const numericId = parseInt(id, 10);

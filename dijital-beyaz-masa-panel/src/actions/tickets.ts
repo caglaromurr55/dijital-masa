@@ -8,16 +8,18 @@ import { requireRole } from '@/lib/auth'
 const WEBHOOK_URL = "https://n8nm.31.57.156.128.sslip.io/webhook/ticket-solved";
 
 // Admin Client specifically for Public Ingestion (Bypassing RLS)
-const supabaseAdmin = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
+function getSupabaseAdmin() {
+    return createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
         }
-    }
-)
+    )
+}
 
 export async function getTickets(
     search: string = "",
@@ -273,7 +275,7 @@ export async function createTicketPublic(formData: FormData) {
         media_url: formData.get('media_url') ? formData.get('media_url') as string : null,
     }
 
-    const { error } = await supabaseAdmin.from('tickets').insert(ticketData)
+    const { error } = await getSupabaseAdmin().from('tickets').insert(ticketData)
 
     if (error) {
         console.error("Public Ticket Error:", error)
