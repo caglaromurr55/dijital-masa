@@ -161,8 +161,14 @@ export async function resolveTicket(id: number, evidenceUrl: string | null) {
     if (fetchError || !ticket) return { error: 'Talep bulunamadı.' }
 
     // Authorization check
-    const { data: profile } = await supabase.from('profiles').select('role, department_id').eq('id', user.id).single()
-    if (profile?.role !== 'admin' && profile?.department_id !== ticket.department_id) {
+    // Admin, Department Head (same dept), OR the Assigned Person can resolve
+    const isAssignedUser = ticket.assigned_to === user.id;
+    const { data: profile } = await supabase.from('profiles').select('role, department_id, full_name').eq('id', user.id).single()
+
+    const isAdmin = profile?.role === 'admin';
+    const isSameDept = profile?.department_id === ticket.department_id;
+
+    if (!isAdmin && !isSameDept && !isAssignedUser) {
         return { error: 'Bu talebi çözme yetkiniz yok.' }
     }
 
@@ -182,10 +188,11 @@ export async function resolveTicket(id: number, evidenceUrl: string | null) {
 
     // Audit Log
     if (user) {
+        const resolverName = profile?.full_name || "Saha Ekibi";
         await supabase.from('audit_logs').insert({
             user_id: user.id,
             action_type: 'TICKET_RESOLVE',
-            description: `Saha ekibi tarafından çözüldü. ${evidenceUrl ? '(Kanıt Fotoğrafı Eklendi)' : ''}`
+            description: `${resolverName} tarafından çözüldü. ${evidenceUrl ? '(Kanıt Fotoğrafı Eklendi)' : ''}`
         })
     }
 
@@ -336,7 +343,7 @@ export async function getAssignedTickets() {
         .from('tickets')
         .select('*')
         .eq('assigned_to', user.id)
-        .in('status', ['open', 'in_progress'])
+        .in('status', ['new', 'open', 'in_progress'])
         .order('priority', { ascending: false }) // Urgent first
         .order('created_at', { ascending: true }) // Oldest first
 
@@ -346,4 +353,55 @@ export async function getAssignedTickets() {
     }
 
     return data
+}
+
+export async function getPublicTicketStatus(ticketId: string, phone: string) {
+    const isAdmin = getSupabaseAdmin()
+
+    // We search by ID and Phone to ensure the user has some ownership/knowledge
+    const { data: ticket, error } = await isAdmin
+        .from('tickets')
+        .select(`
+            *,
+            profiles:assigned_to (full_name)
+        `)
+        .eq('id', ticketId)
+        .eq('citizen_phone', phone)
+        .single()
+
+    if (error || !ticket) {
+        return { error: 'Talep bulunamadı veya bilgiler hatalı.' }
+    }
+
+    return { ticket }
+}
+
+export async function saveTicketEvidence(id: number, evidenceUrl: string) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Yetkisiz işlem.' }
+
+    const { data: ticket } = await supabase.from('tickets').select('*').eq('id', id).single()
+    if (!ticket) return { error: 'Talep bulunamadı.' }
+
+    // Authorization check
+    const isAssignedUser = ticket.assigned_to === user.id;
+    const { data: profile } = await supabase.from('profiles').select('role, department_id').eq('id', user.id).single()
+    const isAdmin = profile?.role === 'admin';
+    const isSameDept = profile?.department_id === ticket.department_id;
+
+    if (!isAdmin && !isSameDept && !isAssignedUser) {
+        return { error: 'Bu talebe fotoğraf ekleme yetkiniz yok.' }
+    }
+
+    const { error } = await supabase
+        .from('tickets')
+        .update({ media_url: evidenceUrl })
+        .eq('id', id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/field/tasks')
+    return { success: true }
 }

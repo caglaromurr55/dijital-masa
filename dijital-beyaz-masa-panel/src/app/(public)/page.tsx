@@ -40,7 +40,7 @@ export default function PublicPage() {
                 </Card>
 
                 {/* Sorgulama Kartı */}
-                <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+                <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm transition-all hover:shadow-md">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                             <Search className="w-5 h-5" />
@@ -50,14 +50,12 @@ export default function PublicPage() {
                             Mevcut başvurunuzun durumunu öğrenin.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                        <Input
-                            placeholder="Takip Numarası Giriniz..."
-                            className="h-11 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-xl"
-                        />
-                        <Button variant="outline" className="w-full h-11 font-bold border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
-                            Sorgula
-                        </Button>
+                    <CardContent>
+                        <Link href="/tracking">
+                            <Button variant="outline" className="w-full h-11 font-bold border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-xl">
+                                Sorgulama Sayfasına Git
+                            </Button>
+                        </Link>
                     </CardContent>
                 </Card>
             </div>

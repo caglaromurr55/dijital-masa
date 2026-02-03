@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Camera, Loader2, X } from "lucide-react";
@@ -9,11 +9,19 @@ import Image from "next/image";
 interface EvidenceUploaderProps {
     onUploadComplete: (url: string) => void;
     ticketId: number;
+    initialUrl?: string | null;
 }
 
-export default function EvidenceUploader({ onUploadComplete, ticketId }: EvidenceUploaderProps) {
+export default function EvidenceUploader({ onUploadComplete, ticketId, initialUrl }: EvidenceUploaderProps) {
     const [uploading, setUploading] = useState(false);
-    const [fileUrl, setFileUrl] = useState<string | null>(null);
+    const [fileUrl, setFileUrl] = useState<string | null>(initialUrl || null);
+
+    // Sync state if prop changes (e.g. after successful upload in parent or initial load)
+    useEffect(() => {
+        if (initialUrl) {
+            setFileUrl(initialUrl);
+        }
+    }, [initialUrl]);
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (!event.target.files || event.target.files.length === 0) {

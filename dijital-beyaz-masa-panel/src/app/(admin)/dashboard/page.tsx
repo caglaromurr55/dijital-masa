@@ -1,13 +1,25 @@
-import { MessageSquare, CalendarDays, AlertCircle, CheckCircle2, History, UserPlus, Clock, MapPin, ChevronRight, Archive, PlusCircle, Zap, LayoutDashboard } from "lucide-react";
+import {
+  MessageSquare,
+  CalendarDays,
+  AlertCircle,
+  CheckCircle2,
+  History,
+  UserPlus,
+  Clock,
+  MapPin,
+  ChevronRight,
+  Archive,
+  PlusCircle,
+  Zap,
+  LayoutDashboard
+} from "lucide-react";
 import Link from "next/link";
 import { getDashboardStats } from "@/actions/dashboard";
 import { getNotes } from "@/actions/notes";
 import { Button } from "@/components/ui/button";
-
-// Temporary mocks for debugging
-const CountdownTimer = ({ targetDate }: any) => <div className="text-xs font-bold text-slate-400">Sayaç Yükleniyor...</div>;
-const QuickNotes = ({ initialNotes }: any) => <div className="text-xs font-bold text-slate-400">Notlar Yükleniyor...</div>;
-const DashboardCharts = ({ tickets }: any) => <div className="h-64 bg-slate-50 dark:bg-slate-900/50 rounded-2xl flex items-center justify-center text-slate-400 font-bold">Grafik Yükleniyor...</div>;
+import CountdownTimer from "@/components/events/CountdownTimer";
+import QuickNotes from "@/components/dashboard/QuickNotes";
+import DashboardCharts from "@/components/dashboard/DashboardCharts";
 
 export default async function Dashboard() {
   const stats = await getDashboardStats();

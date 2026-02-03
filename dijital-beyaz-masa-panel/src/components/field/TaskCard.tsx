@@ -1,51 +1,65 @@
+"use client";
+
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Ticket, MapPin, Calendar, Clock, AlertCircle } from "lucide-react";
+import { MapPin, Calendar, Clock, ChevronRight, AlertCircle } from "lucide-react";
 
 interface TaskCardProps {
-    ticket: any; // We'll infer type from detailed usage or import shared type later
+    ticket: any;
 }
 
 export default function TaskCard({ ticket }: TaskCardProps) {
     const isUrgent = ticket.priority === "high" || ticket.priority === "critical";
+    const isInProgress = ticket.status === "in_progress";
 
     return (
-        <Link href={`/field/tasks/${ticket.id}`} className="block">
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 active:scale-95 transition-transform">
-                <div className="flex justify-between items-start mb-2">
-                    <Badge variant={isUrgent ? "destructive" : "secondary"} className="uppercase text-[10px]">
-                        {ticket.priority || "Normal"}
-                    </Badge>
-                    <span className="text-xs text-slate-400 font-mono">#{ticket.id}</span>
+        <Link href={`/field/tasks/${ticket.id}`} className="group block">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100/50 dark:border-slate-800/50 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300 group-active:scale-95 relative overflow-hidden">
+
+                {/* Visual Accent */}
+                <div className={`absolute top-0 left-0 w-2 h-full ${isUrgent ? 'bg-red-500' : 'bg-blue-500'} opacity-0 group-hover:opacity-100 transition-opacity`} />
+
+                <div className="flex justify-between items-start mb-4">
+                    <div className="flex gap-2">
+                        <Badge variant={isUrgent ? "destructive" : "secondary"} className="rounded-lg h-6 px-3 text-[10px] font-black uppercase tracking-widest border-none">
+                            {ticket.priority || "Normal"}
+                        </Badge>
+                        {isInProgress && (
+                            <Badge className="bg-orange-500/10 text-orange-600 dark:bg-orange-500/20 dark:text-orange-400 border-none rounded-lg h-6 px-3 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                                İŞLEMDE
+                            </Badge>
+                        )}
+                    </div>
+                    <span className="text-[10px] font-black text-slate-300 dark:text-slate-700 tracking-tighter">TASK #{ticket.id}</span>
                 </div>
 
-                <h3 className="font-bold text-slate-800 mb-1 line-clamp-2">
-                    {ticket.summary}
-                </h3>
+                <div className="space-y-2">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 group-hover:text-blue-600 transition-colors tracking-tight leading-tight">
+                        {ticket.summary}
+                    </h3>
+                    <p className="text-sm font-medium text-slate-500 line-clamp-2 leading-relaxed">
+                        {ticket.description || "Talebe ait henüz bir açıklama girilmemiş."}
+                    </p>
+                </div>
 
-                <p className="text-sm text-slate-500 mb-3 line-clamp-2">
-                    {ticket.description || "Açıklama yok"}
-                </p>
-
-                <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <div className="flex items-center gap-1">
-                        <Calendar size={12} />
-                        <span>{new Date(ticket.created_at).toLocaleDateString("tr-TR")}</span>
-                    </div>
-                    {ticket.latitude && (
-                        <div className="flex items-center gap-1 text-blue-500 font-medium">
-                            <MapPin size={12} />
-                            <span>Konumlu</span>
+                <div className="mt-6 pt-6 border-t border-slate-50 dark:border-slate-800/50 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 uppercase tracking-tight">
+                            <Calendar size={14} className="text-blue-500" />
+                            {new Date(ticket.created_at).toLocaleDateString("tr-TR")}
                         </div>
-                    )}
-                </div>
-
-                {ticket.status === "in_progress" && (
-                    <div className="mt-3 bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded flex items-center justify-center gap-1 font-bold">
-                        <Clock size={12} />
-                        DEVAM EDİYOR
+                        {ticket.latitude && (
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-red-500 uppercase tracking-tight">
+                                <MapPin size={14} />
+                                Konumlu
+                            </div>
+                        )}
                     </div>
-                )}
+
+                    <div className="h-8 w-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                        <ChevronRight size={18} />
+                    </div>
+                </div>
             </div>
         </Link>
     );

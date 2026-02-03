@@ -18,6 +18,7 @@ import {
   ChevronRight,
   MapPin,
   HardHat,
+  BarChart3,
   X
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -110,6 +111,7 @@ export default function Sidebar({ userProfile }: SidebarProps) {
     { title: "Harita", path: "/dashboard/map", icon: <MapPin size={18} /> },
     { title: "Talepler", path: "/tickets", icon: <MessageSquare size={18} /> },
     { title: "Etkinlikler", path: "/events", icon: <CalendarDays size={18} /> },
+    { title: "Raporlar", path: "/reports", icon: <BarChart3 size={18} /> },
     { title: "Saha Modülü", path: "/field/tasks", icon: <HardHat size={18} /> },
   ].filter(item => {
     if (userProfile.role === 'admin') return true;
