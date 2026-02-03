@@ -10,7 +10,7 @@ import { Building2, Loader2, Lock } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,15 +21,18 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    console.log('Login attempt result:', { user: data?.user?.id, error: error?.message });
 
     if (error) {
       setError("Giriş başarısız! E-posta veya şifre hatalı.");
       setLoading(false);
     } else {
+      console.log('Login successful, redirecting...');
       router.push("/");
       router.refresh();
     }
@@ -80,8 +83,8 @@ export default function LoginPage() {
                 <span className="mr-2">⚠️</span> {error}
               </div>
             )}
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white h-11 text-base"
               disabled={loading}
             >

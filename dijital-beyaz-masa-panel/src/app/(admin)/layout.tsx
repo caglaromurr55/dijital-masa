@@ -3,6 +3,7 @@ import Sidebar from "@/components/Sidebar";
 import SidebarWrapper from "@/components/layout/SidebarWrapper";
 import { createClient } from "@/lib/supabase/server";
 import { NotificationProvider } from "@/context/NotificationContext";
+import MobileHeader from "@/components/layout/MobileHeader";
 
 export default async function AdminLayout({
     children,
@@ -21,7 +22,8 @@ export default async function AdminLayout({
     return (
         <SidebarProvider>
             <NotificationProvider>
-                <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+                <div className="flex flex-col lg:flex-row h-screen overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors">
+                    <MobileHeader />
                     <Sidebar userProfile={userProfile} />
                     <SidebarWrapper>
                         {children}

@@ -42,6 +42,21 @@ export async function getTickets(
         query = query.or(`citizen_name.ilike.%${search}%,summary.ilike.%${search}%`)
     }
 
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { data: [], count: 0, error: 'Unauthenticated' }
+
+    const { data: profile } = await supabase.from('profiles').select('role, department_id').eq('id', user.id).single()
+    const isAdmin = profile?.role === 'admin'
+    const deptId = profile?.department_id
+
+    // Enforce department filtering for non-admins
+    if (!isAdmin && deptId) {
+        query = query.eq('department_id', deptId)
+    } else if (!isAdmin && !deptId) {
+        // If no department and not admin, they shouldn't see anything in this model
+        return { data: [], count: 0 }
+    }
+
     if (statusFilter && statusFilter !== "all") {
         query = query.eq('status', statusFilter)
     }
@@ -68,7 +83,10 @@ export async function getTickets(
 export async function updateTicketStatus(id: number, newStatus: string) {
     const supabase = await createClient()
 
-    // 1. Get current ticket to access citizen info
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Yetkisiz işlem.' }
+
+    // 1. Get current ticket to access citizen info and check authorization
     const { data: ticket, error: fetchError } = await supabase
         .from('tickets')
         .select('*')
@@ -77,6 +95,12 @@ export async function updateTicketStatus(id: number, newStatus: string) {
 
     if (fetchError || !ticket) {
         return { error: 'Talep bulunamadı.' }
+    }
+
+    // Authorization check
+    const { data: profile } = await supabase.from('profiles').select('role, department_id').eq('id', user.id).single()
+    if (profile?.role !== 'admin' && profile?.department_id !== ticket.department_id) {
+        return { error: 'Bu talebi güncelleme yetkiniz yok.' }
     }
 
     // 2. Update Status
@@ -115,7 +139,6 @@ export async function updateTicketStatus(id: number, newStatus: string) {
     }
 
     // 4. Audit Log
-    const { data: { user } } = await supabase.auth.getUser()
     if (user) {
         await supabase.from('audit_logs').insert({
             user_id: user.id,
@@ -131,9 +154,17 @@ export async function updateTicketStatus(id: number, newStatus: string) {
 export async function resolveTicket(id: number, evidenceUrl: string | null) {
     const supabase = await createClient()
 
-    // Update status to resolved and save evidence
-    // Note: We might need to handle 'media_url' column if it exists, otherwise store in description or separate column?
-    // Assuming 'media_url' column exists based on createTicketPublic usage.
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Yetkisiz işlem.' }
+
+    const { data: ticket, error: fetchError } = await supabase.from('tickets').select('*').eq('id', id).single()
+    if (fetchError || !ticket) return { error: 'Talep bulunamadı.' }
+
+    // Authorization check
+    const { data: profile } = await supabase.from('profiles').select('role, department_id').eq('id', user.id).single()
+    if (profile?.role !== 'admin' && profile?.department_id !== ticket.department_id) {
+        return { error: 'Bu talebi çözme yetkiniz yok.' }
+    }
 
     const updateData: any = { status: 'resolved' };
     if (evidenceUrl) {
@@ -150,7 +181,6 @@ export async function resolveTicket(id: number, evidenceUrl: string | null) {
     }
 
     // Audit Log
-    const { data: { user } } = await supabase.auth.getUser()
     if (user) {
         await supabase.from('audit_logs').insert({
             user_id: user.id,
@@ -162,8 +192,7 @@ export async function resolveTicket(id: number, evidenceUrl: string | null) {
     revalidatePath('/tickets')
     revalidatePath('/field/tasks')
 
-    // 3. Trigger Webhook (Added to match updateTicketStatus logic)
-    const { data: ticket } = await supabase.from('tickets').select('*').eq('id', id).single()
+    // 3. Trigger Webhook (Already have ticket data)
     if (ticket && WEBHOOK_URL) {
         const date = new Date(ticket.created_at).toLocaleDateString("tr-TR");
         const summary = ticket.summary || "Talebiniz";

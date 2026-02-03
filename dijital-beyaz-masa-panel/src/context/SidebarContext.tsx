@@ -4,11 +4,14 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 const SidebarContext = createContext({
   isCollapsed: false,
-  toggleSidebar: () => {},
+  toggleSidebar: () => { },
+  isMobileOpen: false,
+  setMobileOpen: (open: boolean) => { },
 });
 
 export const SidebarProvider = ({ children }: { children: React.ReactNode }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   // Sayfa yüklendiğinde kullanıcının tercihini hatırla
   useEffect(() => {
@@ -25,7 +28,7 @@ export const SidebarProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   return (
-    <SidebarContext.Provider value={{ isCollapsed, toggleSidebar }}>
+    <SidebarContext.Provider value={{ isCollapsed, toggleSidebar, isMobileOpen, setMobileOpen: setIsMobileOpen }}>
       {children}
     </SidebarContext.Provider>
   );

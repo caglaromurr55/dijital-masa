@@ -35,7 +35,22 @@ export async function addNote(formData: FormData) {
 
 export async function deleteNote(id: string) {
     const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Yetkisiz işlem.' }
+
+    // Check ownership
+    const { data: note } = await supabase
+        .from("notes")
+        .select("user_id")
+        .eq("id", id)
+        .single()
+
+    if (note && note.user_id !== user.id) {
+        return { error: 'Sadece kendi notlarınızı silebilirsiniz.' }
+    }
 
     await supabase.from("notes").delete().eq("id", id)
     revalidatePath('/')
+    return { success: true }
 }

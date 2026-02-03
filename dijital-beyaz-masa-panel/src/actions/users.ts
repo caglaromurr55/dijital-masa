@@ -1,11 +1,12 @@
 'use server'
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { requireRole } from '@/lib/auth'
+import { requireRole, getCurrentUser } from '@/lib/auth'
 
 // Admin client for user management
-const supabaseAdmin = createClient(
+const supabaseAdmin = createSupabaseClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     {
@@ -86,13 +87,29 @@ export async function deleteUser(userId: string) {
 }
 
 export async function getUsers() {
-    // Used for assignment dropdowns
-    // Use admin client to bypass any potential RLS on profiles if needed, or regular client if safe
-    // Profiles are usually public or readable by authenticated users
-    const { data, error } = await supabaseAdmin
-        .from('profiles')
-        .select('*')
-        .order('full_name', { ascending: true })
+    // Top-level security check
+    try {
+        await requireRole('personnel');
+    } catch (e) {
+        return [];
+    }
+
+    const user = await getCurrentUser();
+    if (!user) return [];
+
+    const { data: currentUserProfile } = await supabaseAdmin.from('profiles').select('role').eq('id', user.id).single();
+    const isAdmin = currentUserProfile?.role === 'admin';
+
+    // 1. Fetch profiles
+    let query = supabaseAdmin.from('profiles').select('id, full_name, role, department_id');
+
+    // 2. Filter sensitive info for non-admins
+    if (!isAdmin) {
+        // Regular users only see basic info for assignment
+        query = query.select('id, full_name, department_id');
+    }
+
+    const { data, error } = await query.order('full_name', { ascending: true });
 
     if (error) {
         console.error("Error fetching users:", error)

@@ -35,6 +35,9 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  console.log('Middleware Path:', request.nextUrl.pathname);
+  console.log('Middleware User:', user?.id || 'No User');
+
   const publicRoutes = ['/new-ticket', '/login'];
   const isPublicRoute =
     request.nextUrl.pathname === '/' ||
